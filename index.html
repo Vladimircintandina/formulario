@@ -1,179 +1,32 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Formulario de entrega</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f2f2f2;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 20px;
-    }
-    .formulario {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      max-width: 400px;
-      width: 100%;
-      box-shadow: 0 0 10px rgba(0,0,0,0.2);
-    }
-    input, canvas {
-      width: 100%;
-      margin-bottom: 10px;
-      padding: 10px;
-      font-size: 16px;
-    }
-    button {
-      width: 100%;
-      padding: 10px;
-      background-color: green;
-      color: white;
-      border: none;
-      cursor: pointer;
-      font-size: 16px;
-      border-radius: 5px;
-      margin-top: 10px;
-    }
-    #preview {
-      max-width: 100%;
-      margin-top: 10px;
-    }
-    #video {
-      width: 100%;
-      height: auto;
-    }
-  </style>
-</head>
-<body>
-  <div class="formulario">
-    <h2>Entrega de producto</h2>
-    <form id="formulario">
-      <input type="text" name="nombre" placeholder="Nombre" required />
-      <input type="email" name="correo" placeholder="Correo" required />
-      <input type="tel" name="telefono" placeholder="Teléfono" required />
+function doPost(e) {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST',
+    'Access-Control-Allow-Headers': 'Content-Type'
+  };
 
-      <!-- Cámara -->
-      <label>Foto:</label>
-      <video id="video" autoplay></video>
-      <button type="button" id="capturar">Capturar Foto</button>
-      <canvas id="canvas" width="300" height="200" style="display:none;"></canvas>
-      <input type="hidden" name="foto" id="foto" />
-      <img id="preview" style="display:none;" />
+  try {
+    const data = JSON.parse(e.postData.contents);
+    const sheet = SpreadsheetApp.openById('1AS1s-qQY-n8nmNK3RNYfFlcbHVjSPNYsJWnO6WNzGlg')
+                                .getSheetByName('Respuestas 1');
 
-      <!-- Firma -->
-      <label>Firma:</label>
-      <canvas id="canvasFirma" width="300" height="150" style="border:1px solid #000;"></canvas>
-      <input type="hidden" name="firma" id="firma" />
-      <button type="button" id="limpiarFirma">Limpiar Firma</button>
+    sheet.appendRow([
+      new Date(),
+      data.nombre,
+      data.correo,
+      data.telefono,
+      data.foto,
+      data.firma
+    ]);
 
-      <button type="submit">Enviar</button>
-    </form>
-  </div>
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: "success" }))
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeaders(headers);
 
-  <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycby4ILtJHxJ1jMzHfLGEGoJAiocMo8sd27xeNdlPmmdJeGUybsXIg9Ulg9EqMKmwFY5bBg/exec';
-    const form = document.getElementById('formulario');
-
-    // === FOTO ===
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const capturarBtn = document.getElementById('capturar');
-    const fotoInput = document.getElementById('foto');
-    const preview = document.getElementById('preview');
-    let stream;
-
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(mediaStream => {
-        stream = mediaStream;
-        video.srcObject = stream;
-      })
-      .catch(err => {
-        console.error("Error al acceder a la cámara: ", err);
-      });
-
-    capturarBtn.addEventListener('click', () => {
-      canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-      const imageData = canvas.toDataURL('image/png');
-      fotoInput.value = imageData;
-      preview.src = imageData;
-      preview.style.display = 'block';
-
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-      video.style.display = 'none';
-    });
-
-    // === FIRMA ===
-    const canvasFirma = document.getElementById('canvasFirma');
-    const firmaInput = document.getElementById('firma');
-    const limpiarBtn = document.getElementById('limpiarFirma');
-    const ctx = canvasFirma.getContext('2d');
-    let dibujando = false;
-
-    canvasFirma.addEventListener('mousedown', e => {
-      dibujando = true;
-      ctx.beginPath();
-      ctx.moveTo(e.offsetX, e.offsetY);
-    });
-
-    canvasFirma.addEventListener('mousemove', e => {
-      if (dibujando) {
-        ctx.lineTo(e.offsetX, e.offsetY);
-        ctx.stroke();
-      }
-    });
-
-    canvasFirma.addEventListener('mouseup', () => {
-      dibujando = false;
-      firmaInput.value = canvasFirma.toDataURL('image/png');
-    });
-
-    limpiarBtn.addEventListener('click', () => {
-      ctx.clearRect(0, 0, canvasFirma.width, canvasFirma.height);
-      firmaInput.value = "";
-    });
-
-    // === ENVIAR ===
-    form.addEventListener('submit', e => {
-      e.preventDefault();
-
-      if (!firmaInput.value) {
-        firmaInput.value = canvasFirma.toDataURL('image/png');
-      }
-
-      const formData = {
-        nombre: form.nombre.value,
-        correo: form.correo.value,
-        telefono: form.telefono.value,
-        foto: form.foto.value,
-        firma: form.firma.value
-      };
-
-      fetch(scriptURL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
-      })
-        .then(res => res.json())
-        .then(data => {
-          alert("Enviado exitosamente.");
-          form.reset();
-          preview.style.display = 'none';
-          ctx.clearRect(0, 0, canvasFirma.width, canvasFirma.height);
-        })
-        .catch(error => {
-          alert("Error al enviar.");
-          console.error('Error!', error.message);
-        });
-    });
-  </script>
-</body>
-</html>
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: "error", message: err.message }))
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeaders(headers);
+  }
