@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Formulario de contacto</title>
+  <title>Formulario de entrega</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -51,7 +51,7 @@
 </head>
 <body>
   <div class="formulario">
-    <h2>Formulario de contacto</h2>
+    <h2>Entrega de producto</h2>
     <form id="formulario">
       <input type="text" name="nombre" placeholder="Nombre" required />
       <input type="email" name="correo" placeholder="Correo" required />
@@ -62,13 +62,13 @@
       <video id="video" autoplay></video>
       <button type="button" id="capturar">Capturar Foto</button>
       <canvas id="canvas" width="300" height="200" style="display:none;"></canvas>
-      <input type="hidden" name="foto" id="foto" /><!-- 🔧 AJUSTE: Este valor se enviará como base64 -->
+      <input type="hidden" name="foto" id="foto" />
       <img id="preview" style="display:none;" />
 
       <!-- Firma -->
       <label>Firma:</label>
       <canvas id="canvasFirma" width="300" height="150" style="border:1px solid #000;"></canvas>
-      <input type="hidden" name="firma" id="firma" /><!-- 🔧 AJUSTE: Este valor se enviará como base64 -->
+      <input type="hidden" name="firma" id="firma" />
       <button type="button" id="limpiarFirma">Limpiar Firma</button>
 
       <button type="submit">Enviar</button>
@@ -76,7 +76,7 @@
   </div>
 
   <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbxQz9_5AQ_eVBiGmQCIm4yqTdKTQ5tifvj7iPDAW9QdqOW1Kp1b2Fdo8Icaj9xEhmA2lg/exec';
+    const scriptURL = 'https://script.google.com/macros/s/TU_ID_WEBAPP/exec';
     const form = document.getElementById('formulario');
 
     // === FOTO ===
@@ -99,11 +99,10 @@
     capturarBtn.addEventListener('click', () => {
       canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
       const imageData = canvas.toDataURL('image/png');
-      fotoInput.value = imageData; // 🔧 AJUSTE
+      fotoInput.value = imageData;
       preview.src = imageData;
       preview.style.display = 'block';
 
-      // Detener cámara
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
@@ -132,7 +131,7 @@
 
     canvasFirma.addEventListener('mouseup', () => {
       dibujando = false;
-      firmaInput.value = canvasFirma.toDataURL('image/png'); // 🔧 AJUSTE
+      firmaInput.value = canvasFirma.toDataURL('image/png');
     });
 
     limpiarBtn.addEventListener('click', () => {
@@ -142,39 +141,39 @@
 
     // === ENVIAR ===
     form.addEventListener('submit', e => {
-  e.preventDefault();
+      e.preventDefault();
 
-  if (!firmaInput.value) {
-    firmaInput.value = canvasFirma.toDataURL('image/png');
-  }
+      if (!firmaInput.value) {
+        firmaInput.value = canvasFirma.toDataURL('image/png');
+      }
 
-  const formData = {
-    nombre: form.nombre.value,
-    correo: form.correo.value,
-    telefono: form.telefono.value,
-    foto: form.foto.value,
-    firma: form.firma.value
-  };
+      const formData = {
+        nombre: form.nombre.value,
+        correo: form.correo.value,
+        telefono: form.telefono.value,
+        foto: form.foto.value,
+        firma: form.firma.value
+      };
 
-  fetch(scriptURL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(formData)
-  })
-    .then(response => response.json())
-    .then(result => {
-      alert("Enviado exitosamente.");
-      form.reset();
-      preview.style.display = 'none';
-      ctx.clearRect(0, 0, canvasFirma.width, canvasFirma.height);
-    })
-    .catch(error => {
-      alert("Error al enviar.");
-      console.error('Error!', error.message);
+      fetch(scriptURL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      })
+        .then(res => res.json())
+        .then(data => {
+          alert("Enviado exitosamente.");
+          form.reset();
+          preview.style.display = 'none';
+          ctx.clearRect(0, 0, canvasFirma.width, canvasFirma.height);
+        })
+        .catch(error => {
+          alert("Error al enviar.");
+          console.error('Error!', error.message);
+        });
     });
-});
   </script>
 </body>
 </html>
