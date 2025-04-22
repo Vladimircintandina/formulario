@@ -141,47 +141,40 @@
     });
 
     // === ENVIAR ===
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
+    form.addEventListener('submit', e => {
+  e.preventDefault();
 
-      // 🔧 AJUSTE: Asegurar que la firma esté guardada
-      if (!firmaInput.value) {
-        firmaInput.value = canvasFirma.toDataURL('image/png');
-      }
+  if (!firmaInput.value) {
+    firmaInput.value = canvasFirma.toDataURL('image/png');
+  }
 
-      // 🔧 AJUSTE: Construir objeto con los datos
-      const data = {
-        nombre: form.nombre.value,
-        correo: form.correo.value,
-        telefono: form.telefono.value,
-        foto: fotoInput.value,
-        firma: firmaInput.value
-      };
+  const formData = {
+    nombre: form.nombre.value,
+    correo: form.correo.value,
+    telefono: form.telefono.value,
+    foto: form.foto.value,
+    firma: form.firma.value
+  };
 
-      try {
-        const response = await fetch(scriptURL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json' // 🔧 AJUSTE
-          },
-          body: JSON.stringify(data) // 🔧 AJUSTE
-        });
-
-        const result = await response.json();
-
-        if (result.status === "success") {
-          alert("Enviado exitosamente.");
-          form.reset();
-          preview.style.display = 'none';
-          ctx.clearRect(0, 0, canvasFirma.width, canvasFirma.height);
-        } else {
-          alert("Error en el envío: " + result.message);
-        }
-      } catch (error) {
-        alert("Error al enviar.");
-        console.error("Error:", error.message);
-      }
+  fetch(scriptURL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(formData)
+  })
+    .then(response => response.json())
+    .then(result => {
+      alert("Enviado exitosamente.");
+      form.reset();
+      preview.style.display = 'none';
+      ctx.clearRect(0, 0, canvasFirma.width, canvasFirma.height);
+    })
+    .catch(error => {
+      alert("Error al enviar.");
+      console.error('Error!', error.message);
     });
+});
   </script>
 </body>
 </html>
